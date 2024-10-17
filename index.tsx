@@ -10,7 +10,6 @@ import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
 import { useEffect, useState } from "@webpack/common";
 
-// Define settings for the timer
 const settings = definePluginSettings({
     timerAmount: {
         type: OptionType.SLIDER,
@@ -30,10 +29,12 @@ export default definePlugin({
     settings,
 
     start() {
-        this.listener = addPreSendListener(() => {
-            addChatBarButton("MessageCountdown", () =>
-                <this.Timer time={settings.store.timerAmount} />
-            );
+        addChatBarButton("MessageCountdown", () =>
+            this.Timer({ self: this })
+        );
+
+        this.listener = addPreSendListener((_, msg) => {
+            if (this.timeLeft <= 0) this.setTimeLeft(settings.store.timerAmount);
         });
     },
 
@@ -42,8 +43,10 @@ export default definePlugin({
         removePreSendListener(this.listener);
     },
 
-    Timer({ time }) {
-        const [timeLeft, setTimeLeft] = useState(time);
+    Timer({ self }) {
+        const [timeLeft, setTimeLeft] = useState(0);
+        self.timeLeft = timeLeft;
+        self.setTimeLeft = setTimeLeft;
 
         useEffect(() => {
             var timer;
@@ -64,13 +67,12 @@ export default definePlugin({
 
         return (
             <ChatBarButton
-                tooltip="Countdown Reset!"
+                tooltip="Reset Countdown!"
                 onClick={() => {
                     setTimeLeft(0);
-
                 }}
             >
-                <p>{timeLeft}</p>
+                <p style={{ fontSize: "18px" }}>{timeLeft}</p>
             </ChatBarButton>
         );
     }
