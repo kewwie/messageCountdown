@@ -35,8 +35,10 @@ const CountdownComponent = () => {
 
                 if (timeData) {
                     const seconds = Math.floor((timeData.getTime() - new Date().getTime()) / 1000);
-                    setTimeLeft(seconds);
-                    if (seconds <= 0) {
+                    if (seconds > 0) {
+                        setTimeLeft(seconds);
+                    } else {
+                        setTimeLeft(0);
                         storage.delete(channelId);
                     }
                 }
