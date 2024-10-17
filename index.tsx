@@ -7,8 +7,10 @@
 import { addChatBarButton, ChatBarButton, removeChatBarButton } from "@api/ChatButtons";
 import { addPreSendListener, removePreSendListener } from "@api/MessageEvents";
 import { definePluginSettings } from "@api/Settings";
+import { getCurrentChannel } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
 import { useEffect, useState } from "@webpack/common";
+
 
 const settings = definePluginSettings({
     timerAmount: {
@@ -20,6 +22,44 @@ const settings = definePluginSettings({
     }
 });
 
+const storage = new Map<string, Date>();
+
+const CountdownComponent = () => {
+    const [timeLeft, setTimeLeft] = useState(0);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const channelId = getCurrentChannel()?.id;
+            if (channelId) {
+                const timeData = storage.get(channelId);
+
+                if (timeData) {
+                    const seconds = Math.floor((timeData.getTime() - new Date().getTime()) / 1000);
+                    setTimeLeft(seconds);
+                    if (seconds <= 0) {
+                        storage.delete(channelId);
+                    }
+                }
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <ChatBarButton
+            tooltip="Reset Countdown!"
+            onClick={() => {
+                const channelId = getCurrentChannel()?.id;
+                if (channelId) storage.delete(channelId);
+                setTimeLeft(0);
+            }}
+        >
+            <p style={{ fontSize: "18px" }}>{timeLeft}</p>
+        </ChatBarButton>
+    );
+};
+
 export default definePlugin({
     name: "MessageCountdown",
     description: "Coming Soon",
@@ -30,11 +70,16 @@ export default definePlugin({
 
     start() {
         addChatBarButton("MessageCountdown", () =>
-            this.Timer({ self: this })
+            CountdownComponent()
         );
 
-        this.listener = addPreSendListener((_, msg) => {
-            if (this.timeLeft <= 0) this.setTimeLeft(settings.store.timerAmount);
+        this.listener = addPreSendListener((channelId, _) => {
+            const timeData = storage.get(channelId);
+            const nowAndAmount = new Date().getTime() + (settings.store.timerAmount * 1000);
+
+            if (!timeData || timeData.getTime() > nowAndAmount) {
+                storage.set(channelId, new Date(nowAndAmount));
+            }
         });
     },
 
@@ -42,38 +87,4 @@ export default definePlugin({
         removeChatBarButton("MessageCountdown");
         removePreSendListener(this.listener);
     },
-
-    Timer({ self }) {
-        const [timeLeft, setTimeLeft] = useState(0);
-        self.timeLeft = timeLeft;
-        self.setTimeLeft = setTimeLeft;
-
-        useEffect(() => {
-            var timer;
-            if (timeLeft > 0) {
-                timer = setInterval(() => {
-                    setTimeLeft(prevTime => {
-                        if (prevTime <= 1) {
-                            clearInterval(timer);
-                            return 0;
-                        }
-                        return prevTime - 1;
-                    });
-                }, 1000);
-            }
-
-            return () => clearInterval(timer);
-        }, [timeLeft]);
-
-        return (
-            <ChatBarButton
-                tooltip="Reset Countdown!"
-                onClick={() => {
-                    setTimeLeft(0);
-                }}
-            >
-                <p style={{ fontSize: "18px" }}>{timeLeft}</p>
-            </ChatBarButton>
-        );
-    }
 });
