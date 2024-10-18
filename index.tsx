@@ -13,9 +13,9 @@ import { useEffect, useState } from "@webpack/common";
 
 
 const settings = definePluginSettings({
-    timerAmount: {
+    countdownAmount: {
         type: OptionType.SLIDER,
-        description: "The amount of seconds you want the timer to be",
+        description: "The amount of seconds you want the countdown to be",
         markers: [10, 20, 30, 40, 50, 60, 90, 120, 150, 180],
         default: 60,
         stickToMarkers: true
@@ -28,7 +28,7 @@ const CountdownComponent = () => {
     const [timeLeft, setTimeLeft] = useState(0);
 
     useEffect(() => {
-        const timer = setInterval(() => {
+        const loop = setInterval(() => {
             const channelId = getCurrentChannel()?.id;
             if (channelId) {
                 const timeData = storage.get(channelId);
@@ -45,7 +45,7 @@ const CountdownComponent = () => {
             }
         }, 1000);
 
-        return () => clearInterval(timer);
+        return () => clearInterval(loop);
     }, []);
 
     return (
@@ -64,7 +64,7 @@ const CountdownComponent = () => {
 
 export default definePlugin({
     name: "MessageCountdown",
-    description: "Coming Soon",
+    description: "A countdown starts when you send a message, you need to wait for it to finish before it can start again",
     authors: [
         { name: "kewi", id: 292948682884775937n }
     ],
@@ -77,7 +77,7 @@ export default definePlugin({
 
         this.listener = addPreSendListener((channelId, _) => {
             const timeData = storage.get(channelId);
-            const nowAndAmount = new Date().getTime() + (settings.store.timerAmount * 1000);
+            const nowAndAmount = new Date().getTime() + (settings.store.countdownAmount * 1000);
 
             if (!timeData || timeData.getTime() > nowAndAmount) {
                 storage.set(channelId, new Date(nowAndAmount));
