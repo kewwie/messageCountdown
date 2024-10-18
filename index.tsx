@@ -24,7 +24,9 @@ const settings = definePluginSettings({
 
 const storage = new Map<string, Date>();
 
-const CountdownComponent = () => {
+const CountdownComponent = ({ isMainChat }) => {
+    if (!isMainChat) return null;
+
     const [timeLeft, setTimeLeft] = useState(0);
 
     useEffect(() => {
@@ -77,11 +79,17 @@ export default definePlugin({
     ],
     settings,
 
-    start() {
-        addChatBarButton("MessageCountdown", () =>
-            CountdownComponent()
-        );
+    flux: {
+        CHANNEL_SELECT: ({ guildId, _ }) => {
+            if (guildId) {
+                addChatBarButton("MessageCountdown", CountdownComponent);
+            } else {
+                removeChatBarButton("MessageCountdown");
+            }
+        }
+    },
 
+    start() {
         this.listener = addPreSendListener((channelId, _) => {
             const timeData = storage.get(channelId);
             const nowAndAmount = new Date().getTime() + (settings.store.countdownAmount * 1000);
