@@ -16,7 +16,7 @@ const settings = definePluginSettings({
     countdownAmount: {
         type: OptionType.SLIDER,
         description: "The amount of seconds you want the countdown to be",
-        markers: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120],
+        markers: [10, 20, 30, 40, 50, 60, 70, 80, 90],
         default: 60,
         stickToMarkers: true
     }
@@ -58,6 +58,7 @@ const CountdownComponent = () => {
             }}
         >
             <p style={{
+                width: "24px",
                 height: "24px",
                 margin: 0,
                 padding: 0,
