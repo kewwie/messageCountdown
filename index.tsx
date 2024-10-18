@@ -62,7 +62,7 @@ const CountdownComponent = () => {
                 height: "24px",
                 margin: 0,
                 padding: 0,
-                fontSize: "22px",
+                fontSize: "24px",
                 alignContent: "center"
             }}>{timeLeft}</p>
         </ChatBarButton>
